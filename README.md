@@ -11,8 +11,8 @@ This repo has everything from the **Hands-on Python** session — the slides, th
 
 | | |
 |--|--|
-| 🎞 **Slides** | [ai-frontier-python/slides.html](https://AkshayKumar-1729.github.io/ai-frontier-python/slides.html) |
-| 📋 **All snippets** | [ai-frontier-python](https://AkshayKumar-1729.github.io/ai-frontier-python/) |
+| 🎞 **Slides** | [ai-frontier-python/slides.html](https://akshaykumar-1729.github.io/ai-frontier-python/slides.html) |
+| 📋 **All snippets** | [ai-frontier-python](https://akshaykumar-1729.github.io/ai-frontier-python/) |
 | 📓 **Colab notebook** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AkshayKumar-1729/ai-frontier-python/blob/main/notebook/session_notebook.ipynb) |
 
 ---
