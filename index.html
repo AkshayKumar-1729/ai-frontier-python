@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Frontier · Day 2 · Hands-on Python</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-solarizedlight.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#F7F6F3;
+  --surface:#FFFFFF;
+  --text:#1C1C28;
+  --muted:#6B7280;
+  --border:#E5E7EB;
+  --shadow:0 2px 16px rgba(0,0,0,.07);
+  --shadow-hov:0 6px 28px rgba(0,0,0,.1);
+
+  --setup:  #6366F1; --setup-lt:  #EEF2FF;
+  --coral:  #E76F51; --coral-lt:  #FFF0EB;
+  --teal:   #2A9D8F; --teal-lt:   #E8F8F6;
+  --purple: #7B5EA7; --purple-lt: #F4F0FA;
+  --indigo: #4361EE; --indigo-lt: #EEF1FF;
+  --grey:   #9CA3AF; --grey-lt:   #F9FAFB;
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;-webkit-font-smoothing:antialiased}
+
+header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:20px 28px 16px;
+  position:sticky;top:0;z-index:100;
+}
+.hd-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hd-title{font-size:1.05rem;font-weight:800;color:var(--text)}
+.hd-title span{color:var(--coral)}
+.hd-sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+
+#pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;
+  padding:5px 16px;font-size:.78rem;color:var(--muted)}
+
+.prog-track{height:3px;background:var(--border);border-radius:3px;margin-top:14px}
+#prog{height:100%;background:var(--coral);border-radius:3px;width:100%}
+
+main{max-width:860px;margin:0 auto;padding:32px 16px 60px;display:flex;flex-direction:column;gap:14px}
+
+.card{background:var(--surface);border-radius:14px;
+  box-shadow:var(--shadow);overflow:hidden;
+  border-left:4px solid transparent;transition:box-shadow .2s}
+.card:hover{box-shadow:var(--shadow-hov)}
+.card.unlocked{animation:reveal .4s cubic-bezier(.4,0,.2,1)}
+@keyframes reveal{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+.card[data-block="Setup"]   {border-left-color:var(--setup)}
+.card[data-block^="Block 3"]{border-left-color:var(--coral)}
+.card[data-block^="Block 4"]{border-left-color:var(--teal)}
+.card[data-block^="Block 5"]{border-left-color:var(--purple)}
+.card[data-block^="Block 6"]{border-left-color:var(--indigo)}
+
+.card-hd{display:flex;align-items:flex-start;gap:14px;padding:16px 20px}
+
+.num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:800;flex-shrink:0;color:#fff}
+.card[data-block="Setup"]    .num{background:var(--setup)}
+.card[data-block^="Block 3"] .num{background:var(--coral)}
+.card[data-block^="Block 4"] .num{background:var(--teal)}
+.card[data-block^="Block 5"] .num{background:var(--purple)}
+.card[data-block^="Block 6"] .num{background:var(--indigo)}
+
+.hd-info{flex:1;min-width:0}
+.hd-info h2{font-size:.95rem;font-weight:700;line-height:1.4;color:var(--text)}
+.hd-blk{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  margin-top:3px;color:var(--muted)}
+
+.badge{font-size:.7rem;padding:3px 12px;border-radius:12px;white-space:nowrap;flex-shrink:0;font-weight:600}
+.badge-open{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+
+.card-body{padding:0 20px 20px}
+.lead{font-size:.875rem;color:#4B5563;line-height:1.7;margin-bottom:14px}
+
+.note{background:#FFFBF0;border-left:3px solid #F59E0B;padding:10px 14px;
+  border-radius:0 8px 8px 0;font-size:.82rem;color:#374151;line-height:1.65;margin-bottom:12px}
+.note strong{color:var(--text)}
+.note code{background:#FEF3C7;padding:1px 5px;border-radius:3px;font-size:.78em;font-family:monospace}
+
+.code-wrap{position:relative;margin-bottom:12px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border)}
+.code-wrap pre[class*="language-"]{margin:0;border-radius:0;font-size:.79rem;line-height:1.7;
+  background:#FDF6E3 !important;overflow:hidden}
+.code-wrap.collapsed pre[class*="language-"]{max-height:11.9em}
+.code-wrap.collapsed::after{content:'';position:absolute;bottom:32px;left:0;right:0;
+  height:48px;background:linear-gradient(transparent,#FDF6E3);pointer-events:none}
+
+.copy-btn{position:absolute;top:8px;right:8px;
+  background:var(--coral);color:#fff;border:none;border-radius:6px;
+  padding:4px 12px;font-size:.72rem;font-family:inherit;font-weight:600;
+  cursor:pointer;z-index:5;transition:background .15s,transform .1s;
+  box-shadow:0 2px 6px rgba(231,111,81,.3)}
+.copy-btn:hover{background:#d65f3f;transform:translateY(-1px)}
+.copy-btn:active{transform:translateY(0)}
+.copy-btn.copied{background:var(--teal);box-shadow:0 2px 6px rgba(42,157,143,.3)}
+
+.expand-btn{display:block;width:100%;background:#FDF6E3;border:none;
+  border-top:1px solid var(--border);padding:5px 12px;font-size:.72rem;
+  color:var(--muted);cursor:pointer;text-align:center;font-family:inherit;
+  transition:background .15s,color .15s}
+.expand-btn:hover{background:#f5edcc;color:var(--text)}
+
+.vid-wrap{margin-bottom:14px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);background:#000}
+.vid-wrap video{display:block;width:100%;max-height:240px;object-fit:contain}
+.vid-cap{font-size:.72rem;color:var(--muted);padding:6px 12px;
+  background:var(--bg);border-top:1px solid var(--border)}
+
+footer{text-align:center;padding:20px;color:var(--muted);font-size:.78rem;border-top:1px solid var(--border)}
+footer a{color:var(--coral);text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+@media(max-width:560px){
+  header{padding:14px 14px 12px}
+  main{padding:16px 8px 40px}
+  .card-hd{padding:12px 14px;gap:10px}
+  .card-body{padding:0 14px 16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-row">
+    <div>
+      <div class="hd-title">🐍 AI Frontier · Day 2 · <span>Hands-on Python</span></div>
+      <div class="hd-sub">Mr. K. Akshay Kumar · Kovan Labs &nbsp;·&nbsp; Session reference — copy snippet → paste in Colab → Shift+Enter</div>
+    </div>
+    <span id="pill">All snippets</span>
+  </div>
+  <div class="prog-track"><div id="prog"></div></div>
+</header>
+
+<main id="root">
+  <p style="color:var(--muted);text-align:center;padding:48px 0">Loading…</p>
+</main>
+
+<footer>
+  Session reference · <a href="slides.html" target="_blank">Open slides ↗</a> · <a href="https://github.com/AkshayKumar-1729/ai-frontier-python" target="_blank">GitHub ↗</a>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script>
+let snippets = [];
+
+fetch('./snippets.json').then(r => r.json()).then(d => {
+  snippets = d;
+  const total = snippets[snippets.length - 1]?.id ?? 11;
+  render(total);
+  document.getElementById('pill').textContent = 'All ' + (total + 1) + ' snippets';
+}).catch(() => {
+  document.getElementById('root').innerHTML =
+    '<p style="color:#ef4444;text-align:center;padding:48px">⚠️ Could not load snippets.json</p>';
+});
+
+function render(unlocked) {
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  snippets.forEach(s => root.appendChild(buildCard(s, true)));
+  Prism.highlightAll();
+}
+
+function buildCard(s, open) {
+  const card = document.createElement('div');
+  card.className = 'card unlocked';
+  card.setAttribute('data-block', s.block);
+  card.id = 's' + s.id;
+
+  const hd = document.createElement('div');
+  hd.className = 'card-hd';
+  hd.innerHTML =
+    `<span class="num">${s.id}</span>` +
+    `<div class="hd-info"><h2>${esc(s.title)}</h2><div class="hd-blk">${esc(s.block)}</div></div>` +
+    `<span class="badge badge-open">✅ Open</span>`;
+  card.appendChild(hd);
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  const lead = document.createElement('p');
+  lead.className = 'lead';
+  lead.textContent = s.lead;
+  body.appendChild(lead);
+
+  (s.cells || []).forEach(c => {
+    if (c.type === 'md') {
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.innerHTML = marked.parse(c.source);
+      body.appendChild(note);
+    } else if (c.type === 'code') {
+      body.appendChild(mkCode(c.source));
+    } else if (c.type === 'video') {
+      body.appendChild(mkVideo(c.source, c.caption));
+    }
+  });
+  card.appendChild(body);
+  return card;
+}
+
+const PREVIEW_LINES = 8;
+
+function mkCode(src) {
+  const lines = src.split('\n');
+  const needsCollapse = lines.length > PREVIEW_LINES + 2;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'code-wrap' + (needsCollapse ? ' collapsed' : '');
+
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'Copy';
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(src).then(() => {
+      btn.textContent = '✅ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+
+  const pre = document.createElement('pre');
+  const code = document.createElement('code');
+  code.className = 'language-python';
+  code.textContent = src;
+  pre.appendChild(code);
+  wrap.appendChild(btn);
+  wrap.appendChild(pre);
+
+  if (needsCollapse) {
+    const extra = lines.length - PREVIEW_LINES;
+    const expBtn = document.createElement('button');
+    expBtn.className = 'expand-btn';
+    expBtn.textContent = `▼  Show ${extra} more lines`;
+    expBtn.addEventListener('click', () => {
+      const collapsed = wrap.classList.toggle('collapsed');
+      expBtn.textContent = collapsed ? `▼  Show ${extra} more lines` : '▲  Collapse';
+    });
+    wrap.appendChild(expBtn);
+  }
+
+  return wrap;
+}
+
+function mkVideo(src, caption) {
+  const wrap = document.createElement('div');
+  wrap.className = 'vid-wrap';
+  const vid = document.createElement('video');
+  vid.src = src;
+  vid.controls = true;
+  vid.preload = 'metadata';
+  wrap.appendChild(vid);
+  if (caption) {
+    const cap = document.createElement('div');
+    cap.className = 'vid-cap';
+    cap.textContent = '▶ ' + caption;
+    wrap.appendChild(cap);
+  }
+  return wrap;
+}
+
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+</script>
+</body>
+</html>

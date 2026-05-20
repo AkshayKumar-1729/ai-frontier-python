@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 2 · Hands-on Python</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#FAFAF7;
+  --surface:#FFFFFF;
+  --text:#1C1C28;
+  --muted:#6B7280;
+  --border:#E5E7EB;
+  --coral:#E76F51;
+  --coral-lt:#FFF0EB;
+  --teal:#2A9D8F;
+  --teal-lt:#E8F8F6;
+  --purple:#7B5EA7;
+  --purple-lt:#F4F0FA;
+  --indigo:#4361EE;
+  --indigo-lt:#EEF1FF;
+  --gold:#E9C46A;
+  --green:#52B788;
+}
+
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  overflow:hidden;user-select:none;-webkit-font-smoothing:antialiased}
+
+/* ── LINKS ── */
+.slide a{color:inherit;text-decoration:underline;text-underline-offset:3px;
+  text-decoration-thickness:1px;opacity:.85;transition:opacity .15s;cursor:pointer}
+.slide a:hover{opacity:1;text-decoration-thickness:2px}
+.ctx-card a{font-weight:600}
+.pill-link{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.65);
+  border:1px solid rgba(0,0,0,.1);border-radius:20px;padding:3px 12px;font-size:.75rem;
+  font-weight:600;text-decoration:none!important;opacity:1!important;margin-top:8px;
+  transition:background .15s,box-shadow .15s;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.pill-link:hover{background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+
+/* ── PROGRESS ── */
+#bar{position:fixed;top:0;left:0;height:3px;background:var(--coral);
+  transition:width .4s ease;z-index:200}
+
+/* ── DECK ── */
+#deck{width:100vw;height:100vh;position:relative}
+
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:56px 72px;text-align:center;
+  animation:sIn .35s cubic-bezier(.4,0,.2,1)}
+.slide.active{display:flex}
+@keyframes sIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+/* blob decorations */
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.18;pointer-events:none}
+
+/* typography */
+.huge {font-size:clamp(2.6rem,6.5vw,5.2rem);font-weight:800;line-height:1.12;letter-spacing:-.02em}
+.large{font-size:clamp(1.7rem,3.8vw,3rem);font-weight:700;line-height:1.25;letter-spacing:-.01em}
+.med  {font-size:clamp(1.1rem,2.2vw,1.75rem);font-weight:400;line-height:1.5}
+.small{font-size:clamp(.78rem,1.4vw,1.1rem);color:var(--muted);line-height:1.65}
+.label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.coral {color:var(--coral)}
+.teal  {color:var(--teal)}
+.purple{color:var(--purple)}
+.indigo{color:var(--indigo)}
+.gold  {color:var(--gold)}
+.muted {color:var(--muted)}
+.bold  {font-weight:700}
+
+.g8 {margin-top:8px}
+.g16{margin-top:16px}
+.g24{margin-top:24px}
+.g32{margin-top:32px}
+
+/* ── CONTEXT CARD (used on illustration slides) ── */
+.ctx-card{background:var(--surface);border-radius:16px;
+  box-shadow:0 4px 24px rgba(0,0,0,.07);padding:28px 32px;
+  max-width:740px;width:100%;text-align:left}
+.ctx-card .card-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:10px}
+.ctx-card .card-body{font-size:.95rem;color:#374151;line-height:1.7}
+.ctx-card .mind-blow{margin-top:14px;padding:10px 16px;border-radius:8px;
+  font-size:.88rem;font-weight:600;line-height:1.5}
+.ctx-card .run-note{margin-top:12px;font-size:.78rem;color:var(--muted);font-style:italic}
+
+/* ── WHAT THE CODE DOES list ── */
+.code-steps{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.code-steps li{font-size:.85rem;color:#374151;display:flex;gap:10px;align-items:flex-start}
+.code-steps li::before{content:counter(step);counter-increment:step;
+  background:var(--accent,#E76F51);color:#fff;border-radius:50%;
+  width:20px;height:20px;min-width:20px;display:flex;align-items:center;
+  justify-content:center;font-size:.7rem;font-weight:700;margin-top:1px}
+.code-steps{counter-reset:step}
+
+/* ── ILLUSTRATIONS ── */
+
+/* phone mock */
+.phone-mock{position:relative;width:90px;height:160px;background:#f3f4f6;
+  border-radius:18px;border:3px solid #d1d5db;flex-shrink:0;overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.phone-mock::before{content:'';position:absolute;top:8px;left:50%;
+  transform:translateX(-50%);width:28px;height:4px;background:#d1d5db;border-radius:4px}
+.phone-photo{width:100%;height:100%;background:linear-gradient(135deg,#f9a875,#f4d03f,#82b4ff);
+  display:flex;align-items:center;justify-content:center;font-size:2.2rem;padding-top:18px}
+
+/* meta chips */
+.meta-chips{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.chip{background:var(--surface);border-radius:20px;padding:6px 14px;
+  font-size:.75rem;font-weight:500;color:#374151;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);white-space:nowrap;display:flex;gap:6px;align-items:center}
+
+/* hash illustration */
+.hash-row{display:flex;align-items:center;gap:12px;font-size:.8rem}
+.file-box{background:var(--surface);border:2px solid var(--border);border-radius:10px;
+  padding:8px 14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.hash-val{font-family:monospace;font-size:.72rem;background:#f3f4f6;
+  padding:6px 10px;border-radius:6px;color:#374151;letter-spacing:.02em}
+.same-tag{background:#dcfce7;color:#166534;border-radius:6px;
+  padding:2px 8px;font-size:.68rem;font-weight:700;margin-left:6px}
+.arrow-r{color:var(--muted);font-size:1.1rem}
+
+/* browser mock */
+.browser-mock{background:var(--surface);border-radius:12px;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.08);max-width:400px;width:100%;text-align:left}
+.browser-bar{background:#f3f4f6;padding:8px 12px;display:flex;gap:6px;align-items:center}
+.b-dot{width:10px;height:10px;border-radius:50%}
+.browser-url{flex:1;background:white;border-radius:6px;padding:2px 10px;
+  font-size:.7rem;color:var(--muted);margin-left:6px}
+.browser-body{padding:12px 14px;font-family:monospace;font-size:.72rem;
+  color:#374151;line-height:1.8}
+.hl{background:#fef3c7;border-radius:2px;padding:0 2px;font-weight:700;color:#92400e}
+
+/* net diagram */
+.net-diag{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.net-box{padding:8px 14px;border-radius:10px;font-size:.78rem;font-weight:600;text-align:center;min-width:80px}
+.net-arrow{color:var(--muted);font-size:1.2rem}
+
+/* sentiment bar */
+.sent-bar{width:100%;max-width:400px;margin:0 auto}
+.sent-track{height:12px;border-radius:6px;
+  background:linear-gradient(to right,#ef4444,#f59e0b,#22c55e);
+  position:relative;margin:8px 0}
+.sent-label-row{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.sent-words{display:flex;justify-content:space-between;font-size:.8rem;
+  color:#374151;margin-top:4px}
+
+/* 6-emotion grid */
+.emo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:360px}
+.emo-cell{background:var(--surface);border-radius:12px;padding:12px 8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:.8rem;text-align:center}
+.emo-cell .e{font-size:1.8rem;display:block;margin-bottom:4px}
+
+/* face mesh SVG style */
+.mesh-wrap{position:relative;display:inline-block}
+.mesh-wrap svg{display:block}
+
+/* network diagram */
+.net-hop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.hop-box{background:var(--surface);border-radius:12px;padding:10px 16px;
+  font-size:.82rem;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.07);
+  display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px}
+.hop-icon{font-size:1.4rem}
+.hop-label{font-size:.65rem;color:var(--muted)}
+.hop-arrow{font-size:1.1rem;color:var(--muted)}
+
+/* connect-the-dots table */
+.dot-table{width:100%;max-width:800px;border-collapse:separate;border-spacing:0 4px;
+  font-size:clamp(.75rem,1.5vw,.95rem);text-align:left}
+.dot-table td{padding:9px 14px;background:var(--surface)}
+.dot-table td:first-child{border-radius:8px 0 0 8px;font-weight:600}
+.dot-table td:last-child{border-radius:0 8px 8px 0;font-weight:600}
+.dot-table .ar{text-align:center;color:var(--muted);width:40px}
+.day-coral {color:var(--coral)}
+.day-teal  {color:var(--teal)}
+.day-purple{color:var(--purple)}
+.day-indigo{color:var(--indigo)}
+
+/* ── CONTROLS ── */
+#ctrl{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.9);
+  backdrop-filter:blur(8px);border:1px solid var(--border);
+  border-radius:24px;padding:7px 18px;z-index:200;
+  box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.cb{background:none;border:none;color:var(--muted);font-size:1.1rem;
+  cursor:pointer;padding:3px 8px;border-radius:6px;transition:color .15s,background .15s}
+.cb:hover{color:var(--text);background:var(--border)}
+#sc{font-size:.78rem;color:var(--muted);min-width:44px;text-align:center}
+
+#hint{position:fixed;bottom:66px;left:50%;transform:translateX(-50%);
+  font-size:.72rem;color:var(--muted);opacity:.7;transition:opacity .8s;white-space:nowrap}
+#hint.gone{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div id="deck">
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 1 · TITLE                                              -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide active" style="background:linear-gradient(135deg,#FAFAF7 0%,#F0ECE8 100%)">
+  <div class="blob" style="width:400px;height:400px;background:var(--coral);top:-100px;right:-80px"></div>
+  <div class="blob" style="width:300px;height:300px;background:var(--indigo);bottom:-60px;left:-60px"></div>
+
+  <div class="label g16">AI Frontier · Summer Internship 2026 · Day 2</div>
+  <div class="huge g16">Hands-on<br><span class="coral">Python</span></div>
+  <div class="med muted g16" style="max-width:520px">From renaming your photos to running AI on your face — in 3 hours.</div>
+
+  <div style="position:absolute;bottom:48px;left:64px;text-align:left">
+    <div style="font-size:.9rem;font-weight:700">Mr. K. Akshay Kumar</div>
+    <div style="font-size:.8rem;color:var(--muted)">Python & AI App Dev · Kovan Labs</div>
+  </div>
+  <div style="position:absolute;bottom:48px;right:64px;text-align:right;font-size:.8rem;color:var(--muted)">
+    9:30 AM – 12:30 PM<br>LIB315 · AI Foundry Studio
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 2 · THESIS                                             -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--bg)">
+  <div class="blob" style="width:350px;height:350px;background:var(--indigo);top:-80px;left:-60px"></div>
+  <div class="label">By the end of this session</div>
+  <div class="huge g16" style="max-width:700px">
+    You will have written code<br>that runs on <span class="indigo">your phone.</span>
+  </div>
+  <div class="med muted g24">Not metaphorically. Literally.</div>
+  <div class="small g32" style="max-width:500px">
+    We'll go from zero to an AI app with a public URL,<br>a QR code, and your face running through a neural network.
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 3 · CHATGPT META-MOMENT                                -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--bg)">
+  <div class="blob" style="width:300px;height:300px;background:var(--gold);top:-60px;right:-40px;opacity:.12"></div>
+  <div class="label">Block 1 — Live Demo</div>
+  <div class="huge g16">AI speaks <span class="coral">Python.</span></div>
+  <div class="g32" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <div style="background:var(--surface);border-radius:16px;padding:18px 24px;box-shadow:0 4px 20px rgba(0,0,0,.07);font-size:.9rem;max-width:260px;text-align:left">
+      <div style="color:var(--muted);font-size:.72rem;margin-bottom:8px">You say to ChatGPT:</div>
+      <div style="font-weight:600;color:var(--text)">"Make me a Word document with my CV"</div>
+    </div>
+    <div style="font-size:2rem;color:var(--muted)">→</div>
+    <div style="background:#f0fdf4;border-radius:16px;padding:18px 24px;box-shadow:0 4px 20px rgba(0,0,0,.07);font-size:.8rem;max-width:280px;text-align:left;font-family:monospace;color:#166534">
+      from docx import Document<br>
+      doc = Document()<br>
+      doc.add_heading('Priya Sharma')<br>
+      doc.add_paragraph('AI &amp; Data Science')<br>
+      doc.save('cv.docx')
+    </div>
+  </div>
+  <div class="med g32" style="max-width:560px">
+    Every AI tool you use is <span class="bold">writing Python to talk to your computer.</span><br>
+    <span class="muted" style="font-size:.9em">Understand what's under the hood — and you can build anything.</span>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 4 · EXIF — Your Photo's Secret Diary                   -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--coral-lt);justify-content:flex-start;padding-top:44px">
+  <div class="blob" style="width:280px;height:280px;background:var(--coral);bottom:-40px;right:-40px"></div>
+  <div class="label" style="color:var(--coral)">Block 3 — Snippet 2</div>
+  <div class="large g8">Every photo you've ever taken<br>has a <span class="coral">secret diary.</span></div>
+
+  <div class="g24" style="display:flex;gap:28px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <!-- phone mockup -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div class="phone-mock">
+        <div class="phone-photo">🌅</div>
+      </div>
+      <div style="font-size:.7rem;color:var(--muted)">IMG_2084.jpg</div>
+    </div>
+    <!-- meta chips -->
+    <div class="meta-chips">
+      <div class="chip">📍 <span>13.0827°N, 80.2707°E — Coimbatore</span></div>
+      <div class="chip">⏱ <span>2024-03-15 · 14:32:01</span></div>
+      <div class="chip">📷 <span>f/1.8 · ISO 50 · 1/120s</span></div>
+      <div class="chip">📱 <span>Apple iPhone 15 Pro · 48 MP</span></div>
+      <div class="chip">📐 <span>4032 × 3024 px · 4.2 MB</span></div>
+    </div>
+  </div>
+
+  <div class="ctx-card g24" style="--accent:var(--coral)">
+    <div class="card-label" style="color:var(--coral)">What we're doing with 8 lines of Python</div>
+    <ol class="code-steps" style="--accent:var(--coral)">
+      <li>Open each photo with Pillow</li>
+      <li>Read the hidden EXIF tag <code style="background:#fee2e2;padding:1px 5px;border-radius:3px;font-size:.8em">DateTimeOriginal</code></li>
+      <li>Rename the file to <code style="background:#fee2e2;padding:1px 5px;border-radius:3px;font-size:.8em">2024-03-15_14-32-01.jpg</code></li>
+    </ol>
+    <div class="mind-blow" style="background:#fee2e2;color:#991b1b">
+      ⚡ EXIF was standardised in 1995. When you upload a photo to social media without stripping EXIF, journalists have used GPS coordinates to locate whistleblowers.
+    </div>
+    <a class="pill-link" href="https://exifinfo.org" target="_blank" rel="noopener">🔍 Try it — drag any photo to exifinfo.org ↗</a>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 5 · HASHING — Every file has a fingerprint             -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--coral-lt);justify-content:flex-start;padding-top:44px">
+  <div class="blob" style="width:260px;height:260px;background:var(--coral);top:-40px;left:-40px"></div>
+  <div class="label" style="color:var(--coral)">Block 3 — Snippet 3</div>
+  <div class="large g8">Same bytes.<br><span class="coral">Same fingerprint. Always.</span></div>
+
+  <div class="g24" style="display:flex;flex-direction:column;gap:10px;align-items:center">
+    <div class="hash-row">
+      <div class="file-box">📄 selfie.jpg</div>
+      <div class="arrow-r">──→</div>
+      <div>
+        <div class="hash-val">5d41402abc4b2a76b9719d911017c592</div>
+      </div>
+      <div class="same-tag">DUPLICATE ✓</div>
+    </div>
+    <div class="hash-row">
+      <div class="file-box">📄 selfie_copy.jpg</div>
+      <div class="arrow-r">──→</div>
+      <div>
+        <div class="hash-val">5d41402abc4b2a76b9719d911017c592</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+      <div class="file-box" style="border-color:#d1d5db;opacity:.6">📄 meme.jpg</div>
+      <div class="arrow-r" style="opacity:.6">──→</div>
+      <div class="hash-val" style="opacity:.6;color:#9ca3af">7b52009b64fd0a2a49e6d8a939753077</div>
+      <div style="background:#fef2f2;color:#b91c1c;border-radius:6px;padding:2px 8px;font-size:.68rem;font-weight:700">DIFFERENT</div>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:4px">
+      MD5() turns any file into a fixed 32-character fingerprint
+    </div>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--coral);margin-top:20px">
+    <div class="card-label" style="color:var(--coral)">This same idea powers</div>
+    <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
+      <span>🔐 <strong>Git</strong> — tracks your entire codebase with SHA-1 hashes</span>
+      <span>₿ <strong>Bitcoin</strong> — proof-of-work via SHA-256</span>
+      <span>🔑 <strong>Passwords</strong> — stored as hashes, never as plain text</span>
+      <a class="pill-link" href="https://emn178.github.io/online-tools/md5.html" target="_blank" rel="noopener" style="margin-top:4px">⚙️ Generate a hash live ↗</a>
+    </div>
+    <div class="mind-blow" style="background:#fee2e2;color:#991b1b">
+      ⚡ The number of possible SHA-256 hashes is 2²⁵⁶ — more than atoms in the observable universe. A collision is computationally impossible.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 6 · REMBG — The neural net that sees like humans       -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--coral-lt);justify-content:flex-start;padding-top:44px">
+  <div class="label" style="color:var(--coral)">Block 3 — Snippet 4</div>
+  <div class="large g8">3 lines of Python.<br><span class="coral">A neural network trained on 10,000 photos.</span></div>
+
+  <div class="g24 net-diag">
+    <div class="net-box" style="background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.07)">
+      <div style="font-size:2rem">🤳</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Input photo</div>
+    </div>
+    <div class="net-arrow">→</div>
+    <div class="net-box" style="background:#fde8e0;color:var(--coral)">Encoder<br><span style="font-size:.65rem;color:var(--muted)">sees the whole image</span></div>
+    <div class="net-arrow">→</div>
+    <div class="net-box" style="background:#fde8e0;color:var(--coral);font-size:.72rem">Bottleneck<br><span style="font-size:.65rem;color:var(--muted)">compressed understanding</span></div>
+    <div class="net-arrow">→</div>
+    <div class="net-box" style="background:#fde8e0;color:var(--coral)">Decoder<br><span style="font-size:.65rem;color:var(--muted)">rebuilds at full size</span></div>
+    <div class="net-arrow">→</div>
+    <div class="net-box" style="background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.07)">
+      <div style="font-size:2rem">🖼️</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Mask (keep/remove)</div>
+    </div>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--coral);margin-top:20px">
+    <div class="card-label" style="color:var(--coral)">What U2-Net learned</div>
+    <div class="card-body">
+      Trained on <a href="https://www.kaggle.com/datasets/balraj98/duts-saliency-detection-dataset" target="_blank" rel="noopener"><strong>DUTS</strong></a> — 10,553 photos manually labeled pixel-by-pixel. For every pixel, it predicts: <em>"how likely is this to be the main subject?"</em> It doesn't "know" what a background is — it learned what <em>humans consider worth keeping.</em>
+    </div>
+    <div class="mind-blow" style="background:#fee2e2;color:#991b1b">
+      ⚡ Canva's "Remove Background", Adobe Photoshop's magic wand, Zoom's virtual background — all use the same U-Net idea. rembg is the open-source version. 3 lines.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <a class="pill-link" href="https://www.kaggle.com/datasets/balraj98/duts-saliency-detection-dataset" target="_blank" rel="noopener">🖼️ See DUTS labeled images ↗</a>
+      <a class="pill-link" href="https://github.com/xuebinqin/U-2-Net" target="_blank" rel="noopener">💻 U2-Net GitHub ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 7 · WEBSCRAPING — The web is just text                 -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--teal-lt);justify-content:flex-start;padding-top:44px">
+  <div class="blob" style="width:280px;height:280px;background:var(--teal);top:-40px;right:-40px"></div>
+  <div class="label" style="color:var(--teal)">Block 4 — Snippet 5</div>
+  <div class="large g8">Every website is a text file.<br><span class="teal">View Source is a superpower.</span></div>
+
+  <div class="g24" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center">
+    <div class="browser-mock" style="flex:1;min-width:240px;max-width:320px">
+      <div class="browser-bar">
+        <div class="b-dot" style="background:#ff5f57"></div>
+        <div class="b-dot" style="background:#febc2e"></div>
+        <div class="b-dot" style="background:#28c840"></div>
+        <a class="browser-url" href="https://news.ycombinator.com" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted)">news.ycombinator.com ↗</a>
+      </div>
+      <div class="browser-body">
+        &lt;tr class="athing"&gt;<br>
+        &nbsp;&lt;td class=<span class="hl">"titleline"</span>&gt;<br>
+        &nbsp;&nbsp;&lt;a href="..."&gt;<br>
+        &nbsp;&nbsp;&nbsp;<span class="hl">Show HN: I built a Python...</span><br>
+        &nbsp;&nbsp;&lt;/a&gt;<br>
+        &nbsp;&lt;/td&gt;<br>
+        &lt;/tr&gt;
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;justify-content:center;font-size:.82rem">
+      <div style="display:flex;gap:8px;align-items:center">
+        <code style="background:var(--surface);padding:3px 8px;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,.06)">requests.get(url)</code>
+        <span class="muted">fetches the HTML</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <code style="background:var(--surface);padding:3px 8px;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,.06)">BeautifulSoup(html)</code>
+        <span class="muted">parses it</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <code style="background:var(--surface);padding:3px 8px;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,.06)">.select('.titleline > a')</code>
+        <span class="muted">finds every title</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--teal);margin-top:20px">
+    <div class="card-label" style="color:var(--teal)">Mind-blow</div>
+    <div class="card-body">
+      GDPR data, college admissions numbers, real-estate prices, flight fare history — all of this is on the web as structured HTML. Scrapers power <strong>hedge funds, investigative journalism, and academic research.</strong>
+    </div>
+    <div class="mind-blow" style="background:#d1fae5;color:#065f46">
+      ⚡ <a href="https://commoncrawl.org" target="_blank" rel="noopener">CommonCrawl</a> has been scraping the entire web since 2008 — 3.15 billion pages, free for anyone. GPT-4 was partly trained on it. It's a Python script that never stops.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 8 · PANDAS + WIKIPEDIA                                 -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--teal-lt);justify-content:flex-start;padding-top:44px">
+  <div class="label" style="color:var(--teal)">Block 4 — Snippet 6</div>
+  <div class="large g8"><code style="background:rgba(42,157,143,.12);padding:2px 12px;border-radius:8px;font-size:.9em">pd.read_html(url)</code><br>One line. A database.</div>
+
+  <div class="g24" style="background:var(--surface);border-radius:14px;padding:20px 28px;max-width:640px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.06);text-align:left">
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">Python</div>
+    <code style="font-size:.88rem;color:#065f46;line-height:2">
+      import pandas as pd<br>
+      tables = pd.read_html(<span style="color:var(--coral)">'wikipedia.org/wiki/...'</span>)<br>
+      df = tables[0]<span style="color:var(--muted)">&nbsp;&nbsp;# ← that's it</span>
+    </code>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--teal);margin-top:20px">
+    <div class="card-label" style="color:var(--teal)">What just happened</div>
+    <div class="card-body">
+      pandas used BeautifulSoup under the hood, found <em>every</em> <code style="background:#f0fdf4;padding:1px 5px;border-radius:3px">&lt;table&gt;</code> on the Wikipedia page, and converted each one into a DataFrame — with column names, rows, and data types. You pick which table you want.
+    </div>
+    <div class="mind-blow" style="background:#d1fae5;color:#065f46">
+      ⚡ Today: Tamil films. Next time:
+      <a href="https://en.wikipedia.org/wiki/List_of_Indian_Premier_League_records_and_statistics" target="_blank" rel="noopener">IPL stats</a>,
+      <a href="https://en.wikipedia.org/wiki/List_of_constituencies_of_the_Lok_Sabha" target="_blank" rel="noopener">Lok Sabha results</a>,
+      <a href="https://en.wikipedia.org/wiki/List_of_Indians_by_net_worth" target="_blank" rel="noopener">Forbes India list</a>
+      — same one line of code. Zero HTML knowledge needed.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 9 · BREAK                                              -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%)">
+  <div class="blob" style="width:300px;height:300px;background:var(--green);top:-60px;left:-60px;opacity:.15"></div>
+  <div style="font-size:5rem">☕</div>
+  <div class="large g16" style="color:#166534">Take a break.</div>
+  <div class="med muted g16">Back at 11:15 AM</div>
+  <div class="g32" style="background:var(--surface);border-radius:12px;padding:14px 24px;box-shadow:0 2px 10px rgba(0,0,0,.06);font-size:.85rem;color:#374151;max-width:360px">
+    💡 If Snippet 0 is still running in your Colab — let it finish before 11:15. The models need to be warm for the next block.
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 10 · SENTIMENT — How does it know? Tamil?              -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--purple-lt);justify-content:flex-start;padding-top:44px">
+  <div class="blob" style="width:280px;height:280px;background:var(--purple);bottom:-40px;right:-40px"></div>
+  <div class="label" style="color:var(--purple)">Block 5 — Snippet 8</div>
+  <div class="large g8">It learned English emotions from<br><span class="purple">67,349 movie reviews.</span></div>
+
+  <div class="g20 sent-bar">
+    <div class="sent-label-row"><span>😤 Negative</span><span>Positive 😊</span></div>
+    <div class="sent-track"></div>
+    <div class="sent-words">
+      <span style="color:#ef4444">"worst" "terrible"</span>
+      <span style="color:#d97706">"not bad" → 😊</span>
+      <span style="color:#16a34a">"amazing" "love"</span>
+    </div>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--purple);margin-top:20px">
+    <div class="card-label" style="color:var(--purple)">How it works</div>
+    <div class="card-body">
+      <a href="https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english" target="_blank" rel="noopener"><strong>DistilBERT</strong></a> was trained on the <a href="https://nlp.stanford.edu/sentiment/treebank.html" target="_blank" rel="noopener">Stanford Sentiment Treebank</a> — movie reviews labeled positive/negative. It learned word associations <em>and</em> context: "not bad" → positive. It understands that "not" flips the meaning.
+    </div>
+    <div class="mind-blow" style="background:#ede9fe;color:#4c1d95">
+      ⚡ Tamil test: type a Tamil sentence. Watch it fail. It was trained on English only. BUT — <a href="https://huggingface.co/cardiffnlp/twitter-xlm-roberta-base-sentiment" target="_blank" rel="noopener"><strong>XLM-RoBERTa</strong></a> supports 100 languages including Tamil. Multilingual models exist.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 11 · FACE MESH — Snapchat's secret                     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--purple-lt);justify-content:flex-start;padding-top:44px">
+  <div class="blob" style="width:260px;height:260px;background:var(--purple);top:-40px;left:-40px"></div>
+  <div class="label" style="color:var(--purple)">Block 5 — Snippet 9</div>
+  <div class="large g8">468 landmarks.<br><span class="purple">That's how Snapchat puts dog ears on you.</span></div>
+
+  <div class="g20" style="display:flex;gap:32px;align-items:center;flex-wrap:wrap;justify-content:center">
+    <!-- face mesh SVG -->
+    <svg width="140" height="160" viewBox="0 0 140 160" style="flex-shrink:0">
+      <!-- head oval -->
+      <ellipse cx="70" cy="82" rx="52" ry="62" fill="#f9e8d0" stroke="#d1b896" stroke-width="1.5"/>
+      <!-- eyes -->
+      <ellipse cx="48" cy="68" rx="10" ry="7" fill="none" stroke="#7B5EA7" stroke-width="1"/>
+      <ellipse cx="92" cy="68" rx="10" ry="7" fill="none" stroke="#7B5EA7" stroke-width="1"/>
+      <!-- eyebrows -->
+      <path d="M36 58 Q48 53 60 57" fill="none" stroke="#7B5EA7" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M80 57 Q92 53 104 58" fill="none" stroke="#7B5EA7" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- nose -->
+      <path d="M70 75 Q65 90 70 95 Q75 90 70 75" fill="none" stroke="#d1b896" stroke-width="1"/>
+      <!-- mouth -->
+      <path d="M54 110 Q70 122 86 110" fill="none" stroke="#7B5EA7" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- landmark dots -->
+      <g fill="#7B5EA7" opacity=".7">
+        <circle cx="70" cy="20" r="2.5"/> <circle cx="55" cy="26" r="2"/> <circle cx="85" cy="26" r="2"/>
+        <circle cx="38" cy="58" r="2"/> <circle cx="48" cy="61" r="2.5"/> <circle cx="58" cy="58" r="2"/>
+        <circle cx="82" cy="58" r="2"/> <circle cx="92" cy="61" r="2.5"/> <circle cx="102" cy="58" r="2"/>
+        <circle cx="70" cy="95" r="2.5"/> <circle cx="62" cy="101" r="2"/> <circle cx="78" cy="101" r="2"/>
+        <circle cx="54" cy="110" r="2.5"/> <circle cx="70" cy="118" r="2.5"/> <circle cx="86" cy="110" r="2.5"/>
+        <circle cx="18" cy="82" r="2"/> <circle cx="122" cy="82" r="2"/>
+        <circle cx="25" cy="60" r="2"/> <circle cx="115" cy="60" r="2"/>
+        <circle cx="30" cy="100" r="2"/> <circle cx="110" cy="100" r="2"/>
+        <circle cx="42" cy="130" r="2"/> <circle cx="98" cy="130" r="2"/>
+        <circle cx="70" cy="144" r="2.5"/> <circle cx="48" cy="75" r="1.5"/> <circle cx="92" cy="75" r="1.5"/>
+      </g>
+    </svg>
+
+    <div style="font-size:.85rem;text-align:left;max-width:280px;line-height:1.8">
+      <div><span class="purple bold">#17</span> — tip of your nose</div>
+      <div><span class="purple bold">#234</span> — left cheekbone <span style="color:var(--muted);font-size:.78em">← dog ear attaches here</span></div>
+      <div><span class="purple bold">#454</span> — right cheekbone <span style="color:var(--muted);font-size:.78em">← other ear</span></div>
+      <div><span class="purple bold">#4</span> — nose bridge <span style="color:var(--muted);font-size:.78em">← sunglasses bridge</span></div>
+      <div style="margin-top:8px;color:var(--muted);font-size:.78em">MediaPipe tracks all 468 in real-time at 30 fps</div>
+    </div>
+  </div>
+
+  <div class="ctx-card g16" style="--accent:var(--purple);margin-top:16px">
+    <div class="mind-blow" style="background:#ede9fe;color:#4c1d95">
+      ⚡ Every Snapchat filter is a 3D object anchored to specific landmark numbers. The skull is the anchor. The filter is the decoration. You're about to see yours mapped.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <a class="pill-link" href="https://ar.snap.com/lens-studio" target="_blank" rel="noopener">👻 Snapchat Lens Studio ↗</a>
+      <a class="pill-link" href="https://developers.google.com/mediapipe/solutions/vision/face_landmarker" target="_blank" rel="noopener">📍 MediaPipe Face Landmarker docs ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 12 · EMOTION — Paul Ekman, 1972                        -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--purple-lt);justify-content:flex-start;padding-top:44px">
+  <div class="label" style="color:var(--purple)">Block 5 — Snippet 10</div>
+  <div class="large g8">In 1972, Paul Ekman showed these faces<br>to people in <span class="purple">20 countries. Everyone agreed.</span></div>
+
+  <div class="g20 emo-grid">
+    <div class="emo-cell"><span class="e">😊</span>Happy</div>
+    <div class="emo-cell"><span class="e">😢</span>Sad</div>
+    <div class="emo-cell"><span class="e">😠</span>Angry</div>
+    <div class="emo-cell"><span class="e">😮</span>Surprised</div>
+    <div class="emo-cell"><span class="e">😨</span>Fearful</div>
+    <div class="emo-cell"><span class="e">🤢</span>Disgusted</div>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--purple);margin-top:16px">
+    <div class="card-label" style="color:var(--purple)">How DeepFace knows</div>
+    <div class="card-body">
+      Trained on <a href="https://www.kaggle.com/datasets/msambare/fer2013" target="_blank" rel="noopener"><strong>FER2013</strong></a> — 35,887 facial images, labeled by humans. It maps your face to emotion patterns. Under the hood: a <strong>mini-Xception</strong> CNN classifies expression, a <strong>VGG-Face</strong> variant estimates age.
+    </div>
+    <div class="mind-blow" style="background:#ede9fe;color:#4c1d95">
+      ⚡ Hirevue used emotion AI to filter job candidates from interview videos. It was discontinued — the training data skewed toward Western expressions, introducing bias against other cultures.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <a class="pill-link" href="https://www.kaggle.com/datasets/msambare/fer2013" target="_blank" rel="noopener">📊 Browse FER2013 dataset ↗</a>
+      <a class="pill-link" href="https://www.paulekman.com/universal-emotions/" target="_blank" rel="noopener">😊 Paul Ekman's 6 emotions ↗</a>
+      <a class="pill-link" href="https://github.com/serengil/deepface" target="_blank" rel="noopener">💻 DeepFace GitHub ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 13 · HOSTING — How does code run on the internet?      -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--indigo-lt);justify-content:flex-start;padding-top:44px">
+  <div class="blob" style="width:280px;height:280px;background:var(--indigo);bottom:-40px;left:-40px"></div>
+  <div class="label" style="color:var(--indigo)">Block 6 — Snippet 11</div>
+  <div class="large g8">Your code runs on a <span class="indigo">Google server.</span><br>Gradio punches a hole to the internet.</div>
+
+  <div class="g24 net-hop">
+    <div class="hop-box">
+      <span class="hop-icon">📱</span>
+      <span style="font-weight:700;font-size:.8rem">Your phone</span>
+      <span class="hop-label">scans QR</span>
+    </div>
+    <div class="hop-arrow">→</div>
+    <div class="hop-box" style="background:#eef1ff">
+      <span class="hop-icon">🌐</span>
+      <span style="font-weight:700;font-size:.8rem;color:var(--indigo)">gradio.live</span>
+      <span class="hop-label">public relay</span>
+    </div>
+    <div class="hop-arrow">→</div>
+    <div class="hop-box" style="background:#eef1ff">
+      <span class="hop-icon">🔁</span>
+      <span style="font-weight:700;font-size:.8rem;color:var(--indigo)">tunnel</span>
+      <span class="hop-label">reverse proxy</span>
+    </div>
+    <div class="hop-arrow">→</div>
+    <div class="hop-box">
+      <span class="hop-icon">💻</span>
+      <span style="font-weight:700;font-size:.8rem">Colab VM</span>
+      <span class="hop-label">your code · port 7860</span>
+    </div>
+  </div>
+
+  <div class="ctx-card g20" style="--accent:var(--indigo);margin-top:20px">
+    <div class="card-label" style="color:var(--indigo)">What Gradio actually is</div>
+    <div class="card-body">
+      <strong>FastAPI</strong> (Python web server) + auto-generated HTML/JS frontend + a tunnel to gradio.live. The "backend" is your function. The "frontend" — what appears on your phone — is generated automatically. <em>This is real web development, with training wheels.</em>
+    </div>
+    <div class="mind-blow" style="background:#dbeafe;color:#1e3a8a">
+      ⚡ ngrok, Cloudflare Tunnel, GitHub Codespaces — all the same tunnel concept. Day 10 we use raw FastAPI. Today, <a href="https://github.com/gradio-app/gradio" target="_blank" rel="noopener">Gradio</a> gets you there in 4 lines.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 14 · CONNECT THE DOTS                                  -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--bg);justify-content:flex-start;padding-top:44px">
+  <div class="label">Everything you saw today — connects here</div>
+  <div class="g20">
+  <table class="dot-table">
+    <tr>
+      <td class="day-coral">Automation scripts</td>
+      <td class="ar">→</td>
+      <td style="color:var(--muted)">Day 1 · Pandas (you already did this!)</td>
+    </tr>
+    <tr>
+      <td class="day-coral">Phone photo renaming</td>
+      <td class="ar">→</td>
+      <td class="day-coral">Day 3 · ML Fundamentals — image data pipelines</td>
+    </tr>
+    <tr>
+      <td class="day-teal">Web scraping</td>
+      <td class="ar">→</td>
+      <td class="day-teal">Day 6 · NLP — data you scraped becomes training data</td>
+    </tr>
+    <tr>
+      <td class="day-teal">Tamil films table</td>
+      <td class="ar">→</td>
+      <td class="day-teal">Day 8 · Data Visualisation with Matplotlib</td>
+    </tr>
+    <tr>
+      <td class="day-purple">Sentiment analysis</td>
+      <td class="ar">→</td>
+      <td class="day-purple">Day 6 · NLP Basics — you'll build this yourself</td>
+    </tr>
+    <tr>
+      <td class="day-purple">Face mesh + emotion AI</td>
+      <td class="ar">→</td>
+      <td class="day-purple">Day 7 · DL + CNN &nbsp;·&nbsp; Day 9 · Computer Vision</td>
+    </tr>
+    <tr>
+      <td class="day-indigo" style="font-weight:700">ChatGPT writing Python</td>
+      <td class="ar">→</td>
+      <td class="day-indigo" style="font-weight:700">Day 10 · AI Agents — see you again 👋</td>
+    </tr>
+  </table>
+  </div>
+  <div class="small g24" style="font-style:italic;color:var(--indigo)">
+    Today was the overview. The next 12 days are the deep dive.
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 15 · PROJECT HOOK                                      -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:var(--bg)">
+  <div class="blob" style="width:320px;height:320px;background:var(--gold);top:-80px;right:-60px;opacity:.15"></div>
+  <div class="label">This afternoon — project brainstorming</div>
+  <div class="large g20">Pick <span class="coral">2 things</span> you saw today.<br>Combine them. That's your project.</div>
+
+  <div class="g28" style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:28px">
+    <div style="background:var(--surface);border-radius:12px;padding:14px 20px;box-shadow:0 3px 14px rgba(0,0,0,.06);font-size:.85rem;font-weight:600;color:var(--coral)">Scrape + ML</div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px 20px;box-shadow:0 3px 14px rgba(0,0,0,.06);font-size:.85rem;font-weight:600;color:var(--teal)">Webcam + Webserver</div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px 20px;box-shadow:0 3px 14px rgba(0,0,0,.06);font-size:.85rem;font-weight:600;color:var(--purple)">Sentiment + Tamil data</div>
+    <div style="background:var(--surface);border-radius:12px;padding:14px 20px;box-shadow:0 3px 14px rgba(0,0,0,.06);font-size:.85rem;font-weight:600;color:var(--indigo)">AI + Automation</div>
+  </div>
+
+  <div class="small g32" style="max-width:480px">
+    The afternoon session is for brainstorming. Aim high — you now know enough Python to make something real.
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!-- 16 · THANKS                                            -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div class="slide" style="background:linear-gradient(135deg,#FAFAF7 0%,#F0ECE8 100%)">
+  <div class="blob" style="width:360px;height:360px;background:var(--indigo);bottom:-80px;right:-80px;opacity:.12"></div>
+  <div class="blob" style="width:240px;height:240px;background:var(--coral);top:-40px;left:-40px;opacity:.12"></div>
+  <div class="label">See you again on</div>
+  <div class="huge g16">Day <span class="indigo">10.</span></div>
+  <div class="med muted g16">Building Agentic AI Applications</div>
+  <div class="g32" style="display:flex;flex-direction:column;gap:8px;align-items:center">
+    <div style="font-size:.9rem;color:var(--muted)">akshay.kumar.k.1729@gmail.com</div>
+    <div style="font-size:.85rem;color:var(--muted)">Kovan Labs · AI Frontier 2026</div>
+  </div>
+</div>
+
+</div><!-- #deck -->
+
+<div id="ctrl">
+  <button class="cb" id="pb">&#8592;</button>
+  <span id="sc">1 / 16</span>
+  <button class="cb" id="nb">&#8594;</button>
+  <button class="cb" id="fb" title="Fullscreen (F)">⛶</button>
+</div>
+<div id="hint">← → Space · click to advance · F for fullscreen</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const bar=document.getElementById('bar');
+const sc=document.getElementById('sc');
+const hint=document.getElementById('hint');
+let cur=0,gone=false;
+
+function go(n){
+  slides[cur].classList.remove('active');
+  cur=Math.max(0,Math.min(slides.length-1,n));
+  slides[cur].classList.add('active');
+  sc.textContent=`${cur+1} / ${slides.length}`;
+  bar.style.width=`${((cur+1)/slides.length*100).toFixed(1)}%`;
+  if(!gone){gone=true;setTimeout(()=>hint.classList.add('gone'),1200)}
+}
+function next(){go(cur+1)}
+function prev(){go(cur-1)}
+
+document.getElementById('nb').onclick=next;
+document.getElementById('pb').onclick=prev;
+document.getElementById('fb').onclick=()=>{
+  document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+};
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+  if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+});
+
+document.getElementById('deck').addEventListener('click',e=>{
+  if(!e.target.closest('#ctrl')&&!e.target.closest('a')&&!e.target.closest('button'))next();
+});
+
+let tx=null;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(tx===null)return;
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>50)dx<0?next():prev();
+  tx=null;
+},{passive:true});
+
+go(0);
+</script>
+</body>
+</html>

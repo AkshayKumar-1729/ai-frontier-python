@@ -1,0 +1,187 @@
+[
+  {
+    "id": 0,
+    "title": "Warm up the AI engines",
+    "lead": "Run this the SECOND you open the notebook. It downloads the AI models we'll use later (~800MB) while we do the intro. By the time we need them, they're ready.",
+    "block": "Setup",
+    "cells": [
+      {
+        "type": "code",
+        "source": "# Install compatible versions (mediapipe locked to 0.10.21 for Python 3.12)\n!pip install -q --upgrade \"numpy<2.0\" \"scipy<1.13\" rembg deepface mediapipe==0.10.21 gradio qrcode onnxruntime tf-keras\nimport os\n\nprint(\"\u23f3 Pre-warming AI models in the background...\")\n\n# ---- Background removal model ----\nfrom rembg import remove\nfrom PIL import Image\n_ = remove(Image.new('RGB', (10, 10), 'white'))\nprint(\"\u2705 Background-removal model ready\")\n\n# ---- Sentiment model ----\nfrom transformers import pipeline\n_clf = pipeline('sentiment-analysis', model='distilbert-base-uncased-finetuned-sst-2-english')\n_ = _clf('warmup')\nprint(\"\u2705 Sentiment model ready\")\n\n# ---- DeepFace models ----\nfrom deepface import DeepFace\nos.makedirs('/tmp', exist_ok=True)\nImage.new('RGB', (224, 224), color='white').save('/tmp/dummy.jpg')\ntry:\n    _ = DeepFace.analyze('/tmp/dummy.jpg', actions=['age', 'gender', 'emotion'], enforce_detection=False)\nexcept:\n    pass\nprint(\"\u2705 Face-analysis models ready\")\n\nprint(\"\\n\ud83d\ude80 Warm-up complete!\")\n"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "title": "Python is just a really clean way to handle stuff",
+    "lead": "Variables, lists, loops \u2014 but using filenames you'll actually recognize from your gallery.",
+    "block": "Block 3 \u2014 Solve real problems",
+    "cells": [
+      {
+        "type": "code",
+        "source": "# These are typical phone photo filenames\nphotos = [\n    \"IMG_20240315_143201.jpg\",\n    \"IMG_20240315_143215.jpg\",\n    \"IMG_20240315_184422.jpg\",\n    \"IMG_20240316_090101.jpg\",\n    \"PXL_20240316_120304567.jpg\",\n    \"Screenshot_2024-03-16-10-12-44.png\",\n    \"IMG-20240316-WA0007.jpg\",  # WhatsApp photo\n    \"IMG-20240316-WA0011.jpg\",\n]\n\n# How many?\nprint(f\"You have {len(photos)} photos\\n\")\n\n# Loop and number them\nfor i, photo in enumerate(photos, 1):\n    print(f\"{i}. {photo}\")\n\n# Filter \u2014 just the WhatsApp ones (one line!)\nwhatsapp = [p for p in photos if \"WA\" in p]\nprint(f\"\\nWhatsApp photos only ({len(whatsapp)}): {whatsapp}\")\n\n# \ud83d\udd25 Bonus: count screenshots vs camera shots\nscreenshots = [p for p in photos if p.startswith(\"Screenshot\")]\ncamera = [p for p in photos if p.startswith(\"IMG_\") or p.startswith(\"PXL_\")]\nprint(f\"\\n\ud83d\udcf8 {len(camera)} camera shots | \ud83d\udcf1 {len(screenshots)} screenshots\")\n"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Rename your phone photos by date taken",
+    "lead": "The script you'll use for the rest of your life. Reads EXIF metadata, renames every file to YYYY-MM-DD_HH-MM-SS.jpg.",
+    "block": "Block 3 \u2014 Solve real problems",
+    "cells": [
+      {
+        "type": "video",
+        "source": "upload-photos.mp4",
+        "caption": "How to upload your photos into the /content/photos folder"
+      },
+      {
+        "type": "md",
+        "source": "**Before running:** In the left sidebar of Colab, click the \ud83d\udcc1 folder icon, then create a folder called `photos`. Drag 5\u201310 photos from your phone/laptop into it."
+      },
+      {
+        "type": "code",
+        "source": "import os\nfrom PIL import Image\nfrom PIL.ExifTags import TAGS\n\nFOLDER = '/content/photos'\n\ndef get_date_taken(path):\n    # Read DateTimeOriginal from a photo's EXIF metadata\n    try:\n        exif = Image.open(path)._getexif()\n        if not exif:\n            return None\n        for tag_id, value in exif.items():\n            if TAGS.get(tag_id) == 'DateTimeOriginal':\n                return value  # e.g., '2024:03:15 14:32:01'\n    except Exception:\n        return None\n\nrenamed = 0\nskipped = 0\nfor fname in sorted(os.listdir(FOLDER)):\n    old_path = os.path.join(FOLDER, fname)\n    if not os.path.isfile(old_path):\n        continue\n\n    date = get_date_taken(old_path)\n    if not date:\n        print(f\"\u23ed\ufe0f  {fname}  (no EXIF date \u2014 probably a screenshot)\")\n        skipped += 1\n        continue\n\n    ext = os.path.splitext(fname)[1].lower()\n    base = date.replace(':', '-').replace(' ', '_')\n    new_name = f\"{base}{ext}\"\n    new_path = os.path.join(FOLDER, new_name)\n\n    # Collision-safe: if two photos taken same second, append a counter\n    counter = 1\n    while os.path.exists(new_path) and new_path != old_path:\n        new_name = f\"{base}_{counter}{ext}\"\n        new_path = os.path.join(FOLDER, new_name)\n        counter += 1\n\n    os.rename(old_path, new_path)\n    print(f\"\u2705 {fname}  \u2192  {new_name}\")\n    renamed += 1\n\nprint(f\"\\n\ud83c\udf89 Renamed {renamed} photos, skipped {skipped}.\")\nprint(\"\ud83d\udc40 Check the photos/ folder in the sidebar \u2014 names have changed.\")\n"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Find duplicate photos hiding in your folder",
+    "lead": "How many copies of the same meme are in your WhatsApp Images right now? Let's find out.",
+    "block": "Block 3 \u2014 Solve real problems",
+    "cells": [
+      {
+        "type": "code",
+        "source": "import os\nimport hashlib\nfrom collections import defaultdict\n\nFOLDER = '/content/photos'\n\ndef file_hash(path, chunk_size=8192):\n    # MD5 fingerprint of a file's contents\n    h = hashlib.md5()\n    with open(path, 'rb') as f:\n        for chunk in iter(lambda: f.read(chunk_size), b''):\n            h.update(chunk)\n    return h.hexdigest()\n\n# Bucket files by their content hash\nbuckets = defaultdict(list)\nfor fname in os.listdir(FOLDER):\n    path = os.path.join(FOLDER, fname)\n    if os.path.isfile(path):\n        buckets[file_hash(path)].append(fname)\n\n# Anything with more than one file in the same bucket = duplicate\ndupes_found = False\nfor h, files in buckets.items():\n    if len(files) > 1:\n        dupes_found = True\n        print(f\"\ud83d\udd01 Duplicates: {files}\")\n\nif not dupes_found:\n    print(\"\u2728 Clean folder \u2014 no duplicates!\")\n"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Remove the background from a selfie",
+    "lead": "Three lines of Python. A neural network does the work. You just used AI without knowing it.",
+    "block": "Block 3 \u2014 Solve real problems",
+    "cells": [
+      {
+        "type": "md",
+        "source": "**Before running:** Upload one selfie to Colab (drag it into the `/content` folder in the sidebar) and rename it `selfie.jpg`."
+      },
+      {
+        "type": "code",
+        "source": "from rembg import remove\nfrom PIL import Image\nfrom IPython.display import display\n\nINPUT = '/content/photos/selfie.jpg'\nOUTPUT = '/content/photos/selfie_nobg.png'\n\nwith Image.open(INPUT) as img:\n    output = remove(img)        # \u2190 the magic happens here\n    output.save(OUTPUT)\n\nprint(\"\ud83d\udce5 Before:\")\ndisplay(Image.open(INPUT).resize((300, 300)))\nprint(\"\\n\ud83d\udce4 After (transparent background):\")\ndisplay(output.resize((300, 300)))\nprint(f\"\\n\u2705 Saved to {OUTPUT}\")\n"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Scrape the top headlines on Hacker News",
+    "lead": "Your data isn't on your laptop \u2014 it's on the web. Python can grab any of it.",
+    "block": "Block 4 \u2014 Reach the internet",
+    "cells": [
+      {
+        "type": "code",
+        "source": "import requests\nfrom bs4 import BeautifulSoup\n\n# Fetch the page (pretending to be a normal browser)\nresponse = requests.get(\n    'https://news.ycombinator.com/',\n    headers={'User-Agent': 'Mozilla/5.0'}\n)\n\n# Parse the HTML\nsoup = BeautifulSoup(response.text, 'html.parser')\n\n# Grab every story title link\ntitles = soup.select('.titleline > a')\n\nprint(\"\ud83d\udcf0 Hacker News \u2014 right now:\\n\")\nfor i, t in enumerate(titles[:10], 1):\n    print(f\"{i:>2}. {t.text}\")\n"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Highest-grossing Tamil films \u2014 straight into a DataFrame",
+    "lead": "Remember Pandas from Day 1? Watch ONE LINE pull every table off a Wikipedia page.",
+    "block": "Block 4 \u2014 Reach the internet",
+    "cells": [
+      {
+        "type": "code",
+        "source": "import pandas as pd\n\nURL = 'https://en.wikipedia.org/wiki/List_of_highest-grossing_Tamil_films'\n\n# A User-Agent header pretends we are a browser \u2014 avoids Wikipedia's 403 Forbidden\nstorage_options = {'User-Agent': 'Mozilla/5.0'}\n\n# pandas + BeautifulSoup under the hood \u2014 every <table> becomes a DataFrame\ntables = pd.read_html(URL, storage_options=storage_options)\nprint(f\"\ud83d\udcca Found {len(tables)} tables on the page.\\n\")\n\n# Peek at the first column of each so we can pick the right one\nfor i, t in enumerate(tables[:6]):\n    cols = list(t.columns)[:4]\n    print(f\"  Table {i}: {cols}\")\n"
+      },
+      {
+        "type": "code",
+        "source": "# Pick the table that has the actual gross list\n# (if 0 isn't right, try 1, 2, ... based on the output above)\ndf = tables[0]\ndf.head(15)\n"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Browser automation (the Tatkal-booking superpower)",
+    "lead": "DON'T run this in Colab \u2014 it needs a real screen. This is what runs on your laptop while you sleep.",
+    "block": "Block 4 \u2014 Reach the internet",
+    "cells": [
+      {
+        "type": "md",
+        "source": "This is for your **laptop**, not Colab. Skim it \u2014 we'll watch a recording instead. The same pattern automates IRCTC, college portals, Instagram, anything with a browser."
+      },
+      {
+        "type": "code",
+        "source": "# Run this on YOUR LAPTOP, not in Colab.\n# Install once:  pip install playwright && playwright install chromium\n\nfrom playwright.sync_api import sync_playwright\n\nwith sync_playwright() as p:\n    browser = p.chromium.launch(headless=False)   # headless=False = you watch it\n    page = browser.new_page()\n\n    page.goto('https://www.irctc.co.in')\n    page.fill('input[name=\"userId\"]', 'your_username')\n    page.fill('input[name=\"password\"]', 'your_password')\n    page.click('button:has-text(\"SIGN IN\")')\n\n    # ... fill journey form, click search, click book, fill passenger details...\n    # Tatkal opens at 10:00 AM \u2014 bot beats every human in the queue.\n\n    browser.close()\n"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "title": "Text sentiment \u2014 is this tweet happy or angry?",
+    "lead": "Three lines of code, one of the most-used AI models on Earth. Day 3 (ML) and Day 6 (NLP) will show you how it works inside.",
+    "block": "Block 5 \u2014 Python IS AI",
+    "cells": [
+      {
+        "type": "code",
+        "source": "from transformers import pipeline\n\nclassifier = pipeline('sentiment-analysis',\n                      model='distilbert-base-uncased-finetuned-sst-2-english')\n\ntexts = [\n    \"I'm having the best day of my life!\",\n    \"This pizza is the worst thing I've ever eaten.\",\n    \"The movie was okay, nothing special.\",\n    \"Tomorrow's exam \u2014 I'm so ready to fail.\",\n]\n\nfor text in texts:\n    result = classifier(text)[0]\n    emoji = '\ud83d\ude0a' if result['label'] == 'POSITIVE' else '\ud83d\ude1e'\n    print(f\"{emoji}  {result['label']:<8} {result['score']:.1%}   \\\"{text}\\\"\")\n"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "title": "Map your face \u2014 468 AI landmarks live",
+    "lead": "Take a webcam photo right inside Colab. MediaPipe finds your face and pins 468 points to it. This is what Snapchat and Instagram filters use.",
+    "block": "Block 5 \u2014 Python IS AI",
+    "cells": [
+      {
+        "type": "md",
+        "source": "**Step 1:** Run the webcam helper cell below (just once \u2014 it's a 30-line script you don't need to read)."
+      },
+      {
+        "type": "code",
+        "source": "# WEBCAM HELPER \u2014 just run this cell once, then forget it exists\nfrom IPython.display import display, Javascript\nfrom google.colab.output import eval_js\nfrom base64 import b64decode\n\ndef take_photo(filename='photo.jpg', quality=0.8):\n    js = Javascript('''\n        async function takePhoto(quality) {\n            const div = document.createElement('div');\n            const capture = document.createElement('button');\n            capture.textContent = '\ud83d\udcf8 Capture';\n            capture.style.cssText = 'padding:12px 24px;font-size:16px;background:#0a7;color:#fff;border:0;border-radius:6px;cursor:pointer;margin:8px;';\n            div.appendChild(capture);\n\n            const video = document.createElement('video');\n            video.style.display = 'block';\n            video.style.maxWidth = '480px';\n            const stream = await navigator.mediaDevices.getUserMedia({video: true});\n\n            document.body.appendChild(div);\n            div.appendChild(video);\n            video.srcObject = stream;\n            await video.play();\n            google.colab.output.setIframeHeight(document.documentElement.scrollHeight, true);\n\n            await new Promise((resolve) => capture.onclick = resolve);\n\n            const canvas = document.createElement('canvas');\n            canvas.width = video.videoWidth;\n            canvas.height = video.videoHeight;\n            canvas.getContext('2d').drawImage(video, 0, 0);\n            stream.getVideoTracks()[0].stop();\n            div.remove();\n            return canvas.toDataURL('image/jpeg', quality);\n        }\n    ''')\n    display(js)\n    data = eval_js(f'takePhoto({quality})')\n    binary = b64decode(data.split(',')[1])\n    with open(filename, 'wb') as f:\n        f.write(binary)\n    return filename\n\nprint(\"\ud83d\udcf7 Webcam helper loaded. Now run the next cell to take a photo.\")\n"
+      },
+      {
+        "type": "md",
+        "source": "**Step 2:** Run the cell below. Your webcam opens \u2014 click \ud83d\udcf8 Capture, smile, and watch."
+      },
+      {
+        "type": "code",
+        "source": "import mediapipe as mp\nimport cv2\nfrom google.colab.patches import cv2_imshow\n\nmp_face_mesh = mp.solutions.face_mesh\nmp_drawing = mp.solutions.drawing_utils\n\ntry:\n    # Snap a selfie\n    filename = take_photo('selfie.jpg')\n    img = cv2.imread(filename)\n\n    # Let MediaPipe find every contour of your face\n    with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1) as fm:\n        results = fm.process(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))\n\n        if results.multi_face_landmarks:\n            for landmarks in results.multi_face_landmarks:\n                mp_drawing.draw_landmarks(\n                    img, landmarks, mp_face_mesh.FACEMESH_TESSELATION,\n                    landmark_drawing_spec=None,\n                    connection_drawing_spec=mp_drawing.DrawingSpec(\n                        color=(0, 255, 0), thickness=1, circle_radius=1)\n                )\n\n    print(\"\ud83e\udde0 Your face \u2014 as seen by AI (468 landmarks):\")\n    cv2_imshow(img)\n\nexcept NameError:\n    print(\"\u274c The webcam helper (take_photo) isn't loaded. Run the cell above first!\")\nexcept Exception as e:\n    print(f\"\u274c An error occurred: {e}\")\n"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "title": "What does AI think about your face? (age, gender, emotion)",
+    "lead": "DeepFace runs three deep-learning models on your selfie and tells you your age, gender, and what you're feeling. Brace for laughter.",
+    "block": "Block 5 \u2014 Python IS AI",
+    "cells": [
+      {
+        "type": "code",
+        "source": "from deepface import DeepFace\nfrom PIL import Image\nfrom IPython.display import display\n\n# Analyze the same selfie from Snippet 9\nresult = DeepFace.analyze(\n    'selfie.jpg',\n    actions=['age', 'gender', 'emotion'],\n    enforce_detection=False\n)\n\nr = result[0]\n\nprint(f\"\ud83c\udf82 Estimated age: ~{r['age']}\")\nprint(f\"\ud83d\udc64 Gender:        {r['dominant_gender']}\")\nprint(f\"\ud83d\ude0a Emotion:       {r['dominant_emotion']}\")\nprint(f\"\\nFull emotion breakdown:\")\nfor emo, score in r['emotion'].items():\n    bar = '\u2588' * int(score / 2)\n    print(f\"   {emo:<10} {score:>5.1f}%  {bar}\")\n\nprint()\ndisplay(Image.open('selfie.jpg').resize((300, 300)))\n"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "title": "Turn your code into a website your friend can hit from their phone",
+    "lead": "Four lines of Gradio = a real FastAPI backend + auto-generated frontend + a public URL. Your phone scans the QR. You just shipped an app.",
+    "block": "Block 6 \u2014 Talk to the world",
+    "cells": [
+      {
+        "type": "code",
+        "source": "import gradio as gr\nfrom deepface import DeepFace\n\ndef analyze_face(image_path):\n    if image_path is None:\n        return \"Please upload a photo!\"\n    try:\n        result = DeepFace.analyze(\n            image_path,\n            actions=['age', 'gender', 'emotion'],\n            enforce_detection=False\n        )\n        r = result[0]\n        return (\n            f\"\ud83c\udf82 Age: ~{r['age']}\\n\"\n            f\"\ud83d\udc64 Gender: {r['dominant_gender']}\\n\"\n            f\"\ud83d\ude0a Emotion: {r['dominant_emotion']}\"\n        )\n    except Exception as e:\n        return f\"Couldn't analyze that photo: {e}\"\n\ndemo = gr.Interface(\n    fn=analyze_face,\n    inputs=gr.Image(type='filepath', label='\ud83d\udcf8 Snap or upload a selfie'),\n    outputs=gr.Textbox(label='\ud83e\udd16 AI says...'),\n    title='Face Analyzer \u2014 built in 10 minutes',\n    description='Built by a 2nd-year student on Day 2 of the AI Frontier internship.'\n)\n\n# share=True opens a public URL via Gradio's tunnel (FastAPI under the hood)\ndemo.launch(share=True)\n"
+      },
+      {
+        "type": "md",
+        "source": "**After launching:** the cell prints a `*.gradio.live` URL. Copy it, paste it into the cell below to get a QR code you can put on a projector."
+      },
+      {
+        "type": "code",
+        "source": "import qrcode\nfrom PIL import Image\nfrom IPython.display import display\n\n# Paste the gradio.live URL printed above\nSHARE_URL = 'https://PASTE-YOUR-URL-HERE.gradio.live'\n\nqr = qrcode.make(SHARE_URL)\nqr.save('/content/qr.png')\n\nprint(f\"\ud83c\udf10 Live URL: {SHARE_URL}\")\nprint(\"\ud83d\udcf1 Scan with your phone:\")\ndisplay(Image.open('/content/qr.png').resize((400, 400)))\n"
+      }
+    ]
+  }
+]
