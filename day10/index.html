@@ -158,7 +158,7 @@ footer a:hover{text-decoration:underline}
   <div class="hd-row">
     <div>
       <div class="hd-title">🧠 AI Frontier · Day 10 · <span>Building Agentic AI</span></div>
-      <div class="hd-sub">Mr. K. Akshay Kumar · Kovan Labs &nbsp;·&nbsp; copy snippet → paste in Colab → Shift+Enter</div>
+      <div class="hd-sub">Mr. K. Akshay Kumar · Kovan Labs &nbsp;·&nbsp; Refreshes every 4 s · copy snippet → paste in Colab → Shift+Enter</div>
     </div>
     <span id="pill">Loading…</span>
   </div>
@@ -177,17 +177,27 @@ footer a:hover{text-decoration:underline}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <script>
-let snippets=[];
+const GIST =
+  'https://gist.githubusercontent.com/AkshayKumar-KovanLabs/' +
+  '219df9b6d596e159592218f005828ee5/raw/state.json';
 
-// Static student copy: every snippet is unlocked, no live polling.
+let snippets=[], last=-999;
+
 fetch('./snippets.json').then(r=>r.json()).then(d=>{
-  snippets=d;
-  const total=snippets[snippets.length-1]?.id??9;
-  render(total);
+  snippets=d; pollGist(); setInterval(pollGist,4000);
 }).catch(()=>{
   document.getElementById('root').innerHTML=
     '<p style="color:#ef4444;text-align:center;padding:48px">⚠️ Could not load snippets.json</p>';
 });
+
+async function pollGist(){
+  try{
+    const r=await fetch(GIST+'?t='+Date.now(),{cache:'no-store'});
+    const d=await r.json();
+    const n=parseInt(d.unlocked,10);
+    if(n!==last){last=n;render(n)}
+  }catch(e){console.warn('poll fail',e)}
+}
 
 function render(unlocked){
   const root=document.getElementById('root');
