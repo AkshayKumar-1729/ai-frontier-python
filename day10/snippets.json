@@ -11,7 +11,7 @@
       },
       {
         "type": "code",
-        "source": "# Install the Google GenAI SDK (light - no restart needed)\n!pip install -q -U google-genai\n\nimport json, time, asyncio\nfrom google import genai\nfrom google.genai import types\nfrom google.colab import userdata\n\n# --- API KEY (from the Secrets tab) ---\ntry:\n    GOOGLE_API_KEY = userdata.get(\"GOOGLE_API_KEY\")\nexcept Exception:\n    GOOGLE_API_KEY = input(\"Paste your Gemini API key: \")\n\nclient = genai.Client(api_key=GOOGLE_API_KEY)\nMODEL_ID = \"gemini-3.1-flash-lite\"\n\n# Smoke test - if this prints, you're live.\nprint(client.models.generate_content(\n    model=MODEL_ID,\n    contents=\"Reply with exactly: Wanderlust AI is online!\"\n).text)"
+        "source": "# Install the Google GenAI SDK (light - no restart needed)\n!pip install -q -U google-genai\n\nimport json, time, asyncio\nfrom google import genai\nfrom google.genai import types\nfrom google.colab import userdata\n\n# --- API KEY (from the Secrets tab) ---\ntry:\n    GOOGLE_API_KEY = userdata.get(\"GOOGLE_API_KEY\")\nexcept Exception:\n    GOOGLE_API_KEY = input(\"Paste your Gemini API key: \")\n\nclient = genai.Client(api_key=GOOGLE_API_KEY)\nMODEL_ID = \"gemini-2.5-flash\"\n\n# Smoke test - if this prints, you're live.\nprint(client.models.generate_content(\n    model=MODEL_ID,\n    contents=\"Reply with exactly: Wanderlust AI is online!\"\n).text)"
       }
     ]
   },
@@ -59,7 +59,7 @@
     "cells": [
       {
         "type": "code",
-        "source": "# Give the brain HANDS: the live web. Just switch the search tool ON.\nsearch_tool = [types.Tool(google_search=types.GoogleSearch())]\n\nchat = client.chats.create(\n    model=\"gemini-2.5-flash\",   # google_search grounding needs 2.5-flash\n    config=types.GenerateContentConfig(tools=search_tool)\n)\n\nuser_msg = (\"What's the best way to travel from Coimbatore to Coorg this weekend, \"\n            \"and how's the weather there right now?\")\nprint(f\"👤 USER: {user_msg}\\n\" + \"=\"*50)\nresponse = chat.send_message(user_msg)\nprint(f\"🤖 WANDERLUST AI (live search):\\n{response.text}\")"
+        "source": "# Give the brain HANDS: the live web. Just switch the search tool ON.\nsearch_tool = [types.Tool(google_search=types.GoogleSearch())]\n\nchat = client.chats.create(\n    model=\"gemini-2.5-flash\",   # the model we validated for the search/grounding cells\n    config=types.GenerateContentConfig(tools=search_tool)\n)\n\nuser_msg = (\"What's the best way to travel from Coimbatore to Coorg this weekend, \"\n            \"and how's the weather there right now?\")\nprint(f\"👤 USER: {user_msg}\\n\" + \"=\"*50)\nresponse = chat.send_message(user_msg)\nprint(f\"🤖 WANDERLUST AI (live search):\\n{response.text}\")"
       },
       {
         "type": "md",
